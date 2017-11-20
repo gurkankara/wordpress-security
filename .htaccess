@@ -1,0 +1,58 @@
+# Deny access to all .htaccess files
+<files ~ "^.*\.([Hh][Tt][Aa])">
+order allow,deny
+deny from all
+satisfy all
+</files>
+
+# Headers
+Header always set X-Content-Type-Options "nosniff"
+Header always set X-XSS-Protection "1; mode=block"
+Header always set Referrer-Policy "strict-origin-when-cross-origin"
+Header always set Strict-Transport-Security "max-age=63072000; includeSubDomains;"
+Header set Content-Security-Policy "default-src 'self';"
+Header always append X-Frame-Options Deny
+Header always unset X-Pingback
+
+# Disable directory browsing
+Options All -Indexes
+
+# Disable
+Options +FollowSymLinks
+RewriteEngine On
+RewriteCond %{QUERY_STRING} (<|%3C).*script.*(>|%3E) [NC,OR]
+RewriteCond %{QUERY_STRING} GLOBALS(=|[|%[0-9A-Z]{0,2}) [OR]
+RewriteCond %{QUERY_STRING} _REQUEST(=|[|%[0-9A-Z]{0,2})
+RewriteRule ^(.*)$ index.php [F,L]
+
+# Disable author urls
+RewriteCond %{QUERY_STRING} author=d
+RewriteRule ^ /? [L,R=301]
+
+# Always SSL
+SSLOptions +StrictRequire
+SSLRequireSSL
+SSLRequire %{HTTP_HOST} eq "www.your-url.com"
+ErrorDocument 403 https://www.your-url.com
+
+# iframe protect
+RewriteEngine On RewriteCond %{HTTP_REFERER} !^$ RewriteCond %{HTTP_REFERER} 
+!^https://(www\.)?your-url.com/.*$ [NC] RewriteRule \.(gif|jpg)$ 
+https://www.your-url.com/hotlink.gif [R,L]
+
+# BEGIN WordPress
+<IfModule mod_rewrite.c>
+RewriteEngine On
+RewriteBase /
+RewriteRule ^index\.php$ - [L]
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule . /index.php [L]
+</IfModule>
+# END WordPress
+
+# Block WordPress xmlrpc.php ans wp-config.php requests
+<FilesMatch "^.*(error_log|xmlrpc\.php|wp-config\.php|php.ini|\.[hH][tT][aApP].*)$">
+Order deny,allow
+Deny from all
+</FilesMatch>
