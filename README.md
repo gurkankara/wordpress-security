@@ -1,4 +1,4 @@
 # wordpress-security
-WordPress site security
+Basic WordPress site security
 
 htaccess and wp-config.php settings
